@@ -4,6 +4,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
+const fs = require('fs');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
@@ -16,14 +17,20 @@ class Player{
         this.height = 80;
         this.x = Math.random() * (FIELD_WIDTH - this.width);
         this.y = Math.random() * (FIELD_HEIGHT - this.height);
-        this.angle = 0;
         this.movement = {};
     }
-    move(distance){
-        this.x += distance * Math.cos(this.angle);
-        this.y += distance * Math.sin(this.angle);
+    move(dX,dY){
+        this.x += dX;
+        this.y += dY;
     }
 };
+
+fs.readFile(path.resolve(__dirname,"static/test-clients/test-client-1.json"),(err,data)=>{
+if (err) throw err;
+    let st = JSON.parse(data);
+    console.log(st);
+});
+
 
 let players = {};
 
@@ -51,16 +58,16 @@ setInterval(function() {
     Object.values(players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
-            player.move(5);
+            player.move(0,-5);
         }
         if(movement.back){
-            player.move(-5);
+            player.move(0,5);
         }
         if(movement.left){
-            player.angle -= 0.1;
+            player.move(-5,0)
         }
         if(movement.right){
-            player.angle += 0.1;
+            player.move(5,0);
         }
     });
     io.sockets.emit('state', players);
