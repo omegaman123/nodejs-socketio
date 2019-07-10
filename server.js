@@ -117,7 +117,7 @@ setInterval(function () {
             client.y = client.yarr[0]
             client.yarr.shift();
         }
-        sleep(1000);
+        //sleep(1000);
 
 
     });

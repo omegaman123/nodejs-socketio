@@ -7,39 +7,64 @@ const context = canvas.getContext('2d');
 const canvas3d = $('#canvas-3d')[0];
 const img = $('#img')[0];
 
-const renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-renderer.setClearColor('skyblue');
-renderer.shadowMap.enabled = true;
+var camera;
+var scene;
+var renderer;
 
-var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+function init(){
+    camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    scene = new THREE.Scene();
+
+    renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+    renderer.setClearColor(new THREE.Color(0xEEEEEE));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    var planeGeometry = new THREE.PlaneGeometry(60, 60);
+    var planeMaterial = new THREE.MeshBasicMaterial({color: 0xcccccc});
+    var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+    // rotate and position the plane
+    plane.rotation.x = -0.5 * Math.PI;
+    plane.position.x = 15;
+    plane.position.y = 0;
+    plane.position.z = 0;
+
+    // add the plane to the scene
+    scene.add(plane);
+
+    camera.position.x = -30;
+    camera.position.y = 40;
+    camera.position.z = 30;
+    camera.lookAt(scene.position);
+
+    render();
 
 
+    function render(){
+        requestAnimationFrame(render);
+        renderer.render(scene,camera);
+    }
 
-function gameStart() {
-    socket.emit('game-start');
+    function gameStart() {
+        socket.emit('game-start');
+
+    }
+
+    socket.on('state', (clts) => {
+
+
+        Object.values(clts).forEach((client) => {
+            
+        });
+    });
+
+    socket.on('connect', gameStart);
+
 }
 
-$(document).on('keydown keyup', (event) => {
-
-});
 
 
-socket.on('state', (clts) => {
-    context.clearRect(0, 0, canvas.width, canvas.height);
 
-    context.lineWidth = 10;
-    context.beginPath();
-    context.rect(0, 0, canvas.width, canvas.height);
-    context.stroke();
 
-    Object.values(clts).forEach((client) => {
-        console.log(clts);
-        var img1 = new Image();
-        img1.src = '/static/client.gif';
-        //context.drawImage(img1, client.x, client.y);
-        context.font = '30px Bold Arial';
-        context.fillText('Client ' + client.id, client.x, client.y - 20);
-    });
-});
-
-socket.on('connect', gameStart);
+window.onload = init;
