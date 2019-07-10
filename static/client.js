@@ -1,42 +1,30 @@
 'use strict';
 
+
 const socket = io();
 const canvas = $('#canvas-2d')[0];
 const context = canvas.getContext('2d');
+const canvas3d = $('#canvas-3d')[0];
 const img = $('#img')[0];
-var uniq = require('uniq');
-let movement = {};
-var data = [1,2,3,4,5,6,7,8,9];
-console.log(uniq(data));
-var csv = require('csv');
+
+const renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+renderer.setClearColor('skyblue');
+renderer.shadowMap.enabled = true;
+
+var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 
-function gameStart(){
+
+function gameStart() {
     socket.emit('game-start');
-    console.log("Game start!");
 }
 
 $(document).on('keydown keyup', (event) => {
-    const KeyToCommand = {
-        'ArrowUp': 'forward',
-        'ArrowDown': 'back',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
-    };
-    const command = KeyToCommand[event.key];
-    if(command){
-        if(event.type === 'keydown'){
-            movement[command] = true;
-        }else{ /* keyup */
-            movement[command] = false;
-        }
-        socket.emit('movement', movement);
-    }
+
 });
 
 
-
-socket.on('state', (players) => {
+socket.on('state', (clts) => {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     context.lineWidth = 10;
@@ -44,12 +32,13 @@ socket.on('state', (players) => {
     context.rect(0, 0, canvas.width, canvas.height);
     context.stroke();
 
-    Object.values(players).forEach((player) => {
+    Object.values(clts).forEach((client) => {
+        console.log(clts);
         var img1 = new Image();
         img1.src = '/static/client.gif';
-        //context.drawImage(img1, player.x, player.y);
+        //context.drawImage(img1, client.x, client.y);
         context.font = '30px Bold Arial';
-        context.fillText('Client' + player.id, player.x, player.y - 20);
+        context.fillText('Client ' + client.id, client.x, client.y - 20);
     });
 });
 

@@ -8,70 +8,122 @@ const fs = require('fs');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
+let clients = 0;
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
-class Player{
-    constructor(obj={}){
-        this.id = Math.floor(Math.random()*1000000000);
-        this.width = 80;
-        this.height = 80;
-        this.x = Math.random() * (FIELD_WIDTH - this.width);
-        this.y = Math.random() * (FIELD_HEIGHT - this.height);
-        this.movement = {};
+
+
+class Client {
+    constructor(obj = {}) {
+        this.id = ++clients;
+        this.socketID;
+        this.xarr=[];
+        this.yarr = [];
+        this.x = 100;
+        this.y = 100;
+        this.URL = "static/test-clients/test-client-" + this.id + ".json";
     }
-    move(dX,dY){
+
+    move(dX, dY) {
         this.x += dX;
         this.y += dY;
     }
+
 };
 
-fs.readFile(path.resolve(__dirname,"static/test-clients/test-client-1.json"),(err,data)=>{
-if (err) throw err;
-    let st = JSON.parse(data);
-    console.log(st);
-});
 
 
 let players = {};
+let clts = {};
 
-io.on('connection', function(socket) {
+
+io.on('connection', function (socket) {
     let player = null;
-    console.log("connection success")
+    let client = null;
+    console.log("connection success");
     socket.on('game-start', (config) => {
-        player = new Player({
-            socketId: socket.id,
-        });
-        players[player.id] = player;
+        client = new Client();
+        client.socketID = socket.id;
+        clts[client.id] = client;
+        if (client) {
+            fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
+                if (err) throw err;
+                else {
+                    let st = JSON.parse(data);
+                    console.log(st);
+                    client.x = st.x1;
+                    client.y = st.y1;
+                    client.xarr = st.xCrds;
+                    client.yarr = st.yCrds;
+                    console.log(client);
+                }
+            });
+        }
     });
-    socket.on('movement', function(movement) {
-        if(!player){return;}
-        player.movement = movement;
+    socket.on('movement', function (movement) {
+        if (!player || !client) {
+            return;
+        }
+        console.log(client);
     });
+    socket.on('new-client',function(){
+        console.log("12345");
+        client = new Client();
+        client.socketID = socket.id;
+        clts[client.id] = client;
+        if (client) {
+            fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
+                if (err) throw err;
+                else {
+                    let st = JSON.parse(data);
+                    console.log(st);
+                    client.x = st.x1;
+                    client.y = st.y1;
+                    client.xarr = st.xCrds;
+                    client.yarr = st.yCrds;
+                    console.log(client);
+                }
+            })
+        }
+    });
+
     socket.on('disconnect', () => {
-        if(!player){return;}
-        delete players[player.id];
-        player = null;
+        if (client) {
+            console.log("client : " + client.name + " disconnected")
+            delete clts[client.id];
+            client = null;
+            --clients;
+        }
     });
 });
 
-setInterval(function() {
-    Object.values(players).forEach((player) => {
-        const movement = player.movement;
-        if(movement.forward){
-            player.move(0,-5);
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+        if ((new Date().getTime() - start) > milliseconds){
+            break;
         }
-        if(movement.back){
-            player.move(0,5);
+    }
+}
+
+setInterval(function () {
+    Object.values(clts).forEach((client) => {
+
+        if ((client.xarr[0]) != null){
+                client.x = client.xarr[0]
+                client.xarr.shift();
         }
-        if(movement.left){
-            player.move(-5,0)
+        if (( client.yarr[0]) != null){
+            client.y = client.yarr[0]
+            client.yarr.shift();
         }
-        if(movement.right){
-            player.move(5,0);
-        }
+        sleep(1000);
+
+
     });
-    io.sockets.emit('state', players);
-}, 1000/30);
+    io.sockets.emit('state', clts);
+
+}, 1000 / 30);
 
 app.use('/static', express.static(__dirname + '/static'));
 
@@ -79,6 +131,6 @@ app.get('/', (request, response) => {
     response.sendFile(path.join(__dirname, '/static/index.html'));
 });
 
-server.listen(3000, function() {
+server.listen(3000, function () {
     console.log('Starting server on port 3000');
 });
