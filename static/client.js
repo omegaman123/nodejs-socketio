@@ -10,8 +10,14 @@ const img = $('#img')[0];
 var camera;
 var scene;
 var renderer;
+let movement = {};
+
+let controls = new function(){
+    this.y = 100
+};
 
 function init(){
+
     camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     scene = new THREE.Scene();
@@ -26,7 +32,7 @@ function init(){
 
     // rotate and position the plane
     plane.rotation.x = -0.5 * Math.PI;
-    plane.position.x = 15;
+    plane.position.x = 0;
     plane.position.y = 0;
     plane.position.z = 0;
 
@@ -38,33 +44,74 @@ function init(){
     camera.position.z = 30;
     camera.lookAt(scene.position);
 
-    render();
+    var axes = new THREE.AxisHelper(20);
+    scene.add(axes);
 
+
+    const Msh =[];
+    var cGeo = new THREE.BoxGeometry(5,5,5);
+    var cMat = new THREE.MeshLambertMaterial({color: 'black',wireframe:true});
+    var cl = new THREE.Mesh(cGeo,cMat);
 
     function render(){
         requestAnimationFrame(render);
         renderer.render(scene,camera);
+        socket.on('update-return',(clts)=>{
+            Object.values(clts).forEach((client) => {
+                if (!Msh[client.id]){
+                    var p = cl.clone();
+                    Msh[client.id] = p;
+                    scene.add(p);
+                }
+                var c = Msh[client.id];
+                c.position.x = client.x;
+                c.position.z = client.z;
+                c.position.y = client.y;
+
+            });
+        });
+
     }
+
+
+
+    render();
 
     function gameStart() {
-        socket.emit('game-start');
-
+        socket.emit('new-client');
     }
-
-    socket.on('state', (clts) => {
-
-
-        Object.values(clts).forEach((client) => {
-            
-        });
-    });
 
     socket.on('connect', gameStart);
 
 }
+function resize(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+$(document).on('keydown keyup', (event) => {
+    const KeyToCommand = {
+        'ArrowUp': 'up',
+        'ArrowDown': 'down',
+        'ArrowLeft': 'left',
+        'ArrowRight': 'right',
+    };
+    const command = KeyToCommand[event.key];
+    if(command){
+        if(event.type === 'keydown'){
+            movement[command] = true;
+        }else{ /* keyup */
+            movement[command] = false;
+        }
+        socket.emit('update', movement);
+    }
 
 
+});
 
 
-
+window.addEventListener('resize',resize,false);
 window.onload = init;
+
+
