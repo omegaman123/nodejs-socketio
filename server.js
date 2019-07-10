@@ -17,7 +17,7 @@ class Client {
     constructor(obj = {}) {
         this.id = ++clients;
         this.socketID;
-        this.xarr=[];
+        this.xarr = [];
         this.yarr = [];
         this.x = 100;
         this.y = 100;
@@ -31,14 +31,9 @@ class Client {
 
 };
 
-
-
-let players = {};
 let clts = {};
 
-
 io.on('connection', function (socket) {
-    let player = null;
     let client = null;
     console.log("connection success");
     socket.on('game-start', (config) => {
@@ -47,8 +42,10 @@ io.on('connection', function (socket) {
         clts[client.id] = client;
         if (client) {
             fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
-                if (err) throw err;
-                else {
+                if (err) {
+                    console.log(err);
+                    return;
+                } else {
                     let st = JSON.parse(data);
                     console.log(st);
                     client.x = st.x1;
@@ -56,6 +53,7 @@ io.on('connection', function (socket) {
                     client.xarr = st.xCrds;
                     client.yarr = st.yCrds;
                     console.log(client);
+                    socket.emit('create-client', client);
                 }
             });
         }
@@ -65,26 +63,6 @@ io.on('connection', function (socket) {
             return;
         }
         console.log(client);
-    });
-    socket.on('new-client',function(){
-        console.log("12345");
-        client = new Client();
-        client.socketID = socket.id;
-        clts[client.id] = client;
-        if (client) {
-            fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
-                if (err) throw err;
-                else {
-                    let st = JSON.parse(data);
-                    console.log(st);
-                    client.x = st.x1;
-                    client.y = st.y1;
-                    client.xarr = st.xCrds;
-                    client.yarr = st.yCrds;
-                    console.log(client);
-                }
-            })
-        }
     });
 
     socket.on('disconnect', () => {
@@ -100,7 +78,7 @@ io.on('connection', function (socket) {
 function sleep(milliseconds) {
     var start = new Date().getTime();
     for (var i = 0; i < 1e7; i++) {
-        if ((new Date().getTime() - start) > milliseconds){
+        if ((new Date().getTime() - start) > milliseconds) {
             break;
         }
     }
@@ -109,17 +87,15 @@ function sleep(milliseconds) {
 setInterval(function () {
     Object.values(clts).forEach((client) => {
 
-        if ((client.xarr[0]) != null){
-                client.x = client.xarr[0]
-                client.xarr.shift();
+        if ((client.xarr[0]) != null) {
+            client.x = client.xarr[0]
+            client.xarr.shift();
         }
-        if (( client.yarr[0]) != null){
+        if ((client.yarr[0]) != null) {
             client.y = client.yarr[0]
             client.yarr.shift();
         }
-        sleep(1000);
-
-
+        //sleep(1000);
     });
     io.sockets.emit('state', clts);
 
