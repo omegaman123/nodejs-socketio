@@ -47,7 +47,7 @@ io.on('connection', function (socket) {
     socket.on('new-client', (config) => {
         console.log("clients# " + clients);
         client = new Client();
-        client.id = client.id++;
+        client.id = ++clients;
         client.socketID = socket.id;
         clts[client.id] = client;
 
@@ -68,13 +68,13 @@ io.on('connection', function (socket) {
     });
     socket.on('update',  function(update){
         if (!clts[update.id]) {
-            console.log("blah");
+            //console.log("blah");
             var cl = new Client();
             cl.socketID = socket.id;
             clts[update.id] = cl;
         }
         clts[update.id].movement = update;
-        console.log("bloo");
+        //console.log("bloo");
 
     });
 
@@ -98,7 +98,7 @@ function sleep(milliseconds) {
 setInterval(function () {
    // sleep(1000);
     Object.values(clts).forEach((client) => {
-        console.log(client.id);
+        //console.log(client.id);
         const mov = client.movement
         if (mov.up){
             client.move(0,-1);

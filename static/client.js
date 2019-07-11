@@ -10,11 +10,8 @@ const img = $('#img')[0];
 var camera;
 var scene;
 var renderer;
-let movement = {};
+let update = {};
 
-let controls = new function(){
-    this.y = 100
-};
 
 function init(){
 
@@ -59,8 +56,10 @@ function init(){
         socket.on('update-return',(clts)=>{
             Object.values(clts).forEach((client) => {
                 if (!Msh[client.id]){
-                    var p = cl.clone();
+                    cMat = new THREE.MeshLambertMaterial({color:Math.random()});
+                    var p = new THREE.Mesh(cGeo,cMat);
                     Msh[client.id] = p;
+
                     scene.add(p);
                 }
                 var c = Msh[client.id];
@@ -97,14 +96,21 @@ $(document).on('keydown keyup', (event) => {
         'ArrowLeft': 'left',
         'ArrowRight': 'right',
     };
+    if (event.which == 49){
+
+        socket.emit('new-client');
+        return;
+    } if (event.which == 50){
+
+    }
     const command = KeyToCommand[event.key];
     if(command){
         if(event.type === 'keydown'){
-            movement[command] = true;
+            update[command] = true;
         }else{ /* keyup */
-            movement[command] = false;
+            update[command] = false;
         }
-        socket.emit('update', movement);
+        socket.emit('update', update);
     }
 
 

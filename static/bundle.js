@@ -9585,7 +9585,7 @@ $(document).on('keydown keyup', (event) => {
         }else{ /* keyup */
             movement[command] = false;
         }
-        socket.emit('movement', movement);
+        socket.emit('update', movement);
     }
 });
 
