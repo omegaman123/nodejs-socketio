@@ -14,11 +14,13 @@ let update = {};
 
 
 function init(){
-
+    //init camera for scene
     camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+    //init scene where objects are placed and rendered.
     scene = new THREE.Scene();
 
+    //init renderer.
     renderer = new THREE.WebGLRenderer({canvas:canvas3d});
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -41,12 +43,10 @@ function init(){
     camera.position.z = 30;
     camera.lookAt(scene.position);
 
-    var clock = new THREE.Clock();
-
     var axes = new THREE.AxisHelper(20);
     scene.add(axes);
 
-
+    //Create array of Meshes to be displayed along with basic material and geometry.
     const Msh =[];
     var cGeo = new THREE.BoxGeometry(5,5,5);
     var cMat = new THREE.MeshLambertMaterial({color: 'black',wireframe:true});
@@ -56,6 +56,7 @@ function init(){
         requestAnimationFrame(render);
         renderer.render(scene,camera);
 
+        //When client receives update-return, render all of the objects with updated positions
         socket.on('update-return',(clts)=>{
             Object.values(clts).forEach((client) => {
 

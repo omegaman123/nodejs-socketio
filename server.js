@@ -4,7 +4,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
-const fs = require('fs');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
@@ -12,18 +11,16 @@ let clients = 0;
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
 
-
+//Client object with position and id, stored on server, displayed on client.
 class Client {
     constructor(obj = {}) {
-        this.id = clients;
+        this.id;
         this.socketID;
-        this.xarr=[];
-        this.yarr = [];
         this.x = 0;
         this.y = 5;
         this.z = 0;
         this.movement = {};
-        this.URL = "static/test-clients/test-client-" + this.id + ".json";
+        //this.URL = "static/test-clients/test-client-" + this.id + ".json";
     }
 
     move(dX, dY) {
@@ -33,15 +30,13 @@ class Client {
     remove(){
         delete clts[this.id];
     }
-
 };
 
-
+// Array of clients to be kept on server.
 let clts = {};
 
 
 io.on('connection', function (socket) {
-
     let client = null;
     console.log("connection success");
     socket.on('new-client', (config) => {
@@ -52,6 +47,8 @@ io.on('connection', function (socket) {
         clts[client.id] = client;
 
     });
+    // If server receives update, check ID, create new client if new ID, update movement field regardless.
+    // Communicate to client that update needs to be rendered.
     socket.on('update',  function(update){
         if (!clts[update.id]) {
             //console.log("blah");
@@ -59,7 +56,6 @@ io.on('connection', function (socket) {
             cl.id = update.id;
             cl.socketID = socket.id;
             clts[update.id] = cl;
-
         }
         //console.log(update.id);
         clts[update.id].movement = update;
@@ -74,21 +70,13 @@ io.on('connection', function (socket) {
     });
 });
 
-function sleep(milliseconds) {
-    var start = new Date().getTime();
-    for (var i = 0; i < 1e7; i++) {
-        if ((new Date().getTime() - start) > milliseconds){
-            break;
-        }
-    }
-}
-
-
+// Checks movement field of each client at set interval (30/sec) whether position needs to be updated.
+// Communicates that update needs to be rendered in client.
 setInterval(function () {
    // sleep(1000);
     Object.values(clts).forEach((client) => {
         //console.log(client.id);
-        const mov = client.movement
+        const mov = client.movement;
         if (mov.up){
             client.move(0,-1);
         }
