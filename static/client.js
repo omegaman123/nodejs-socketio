@@ -41,6 +41,8 @@ function init(){
     camera.position.z = 30;
     camera.lookAt(scene.position);
 
+    var clock = new THREE.Clock();
+
     var axes = new THREE.AxisHelper(20);
     scene.add(axes);
 
@@ -53,13 +55,16 @@ function init(){
     function render(){
         requestAnimationFrame(render);
         renderer.render(scene,camera);
+
         socket.on('update-return',(clts)=>{
             Object.values(clts).forEach((client) => {
+
                 if (!Msh[client.id]){
-                    cMat = new THREE.MeshLambertMaterial({color:Math.random()});
+                    cMat = new THREE.MeshLambertMaterial({color:Math.random() *0xffffff, wireframe: true});
                     var p = new THREE.Mesh(cGeo,cMat);
                     Msh[client.id] = p;
                     scene.add(p);
+                    console.log("adding new mesh for " + client.id);
                 }
                 var c = Msh[client.id];
                 c.position.x = client.x;
@@ -69,19 +74,15 @@ function init(){
 
             });
         });
-
     }
-
-
 
     render();
 
-    function gameStart() {
+    function init() {
         socket.emit('new-client');
     }
 
-    socket.on('connect', gameStart);
-
+    socket.on('connect', init);
 }
 function resize(){
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -97,25 +98,27 @@ $(document).on('keydown keyup', (event) => {
         'ArrowLeft': 'left',
         'ArrowRight': 'right',
     };
-    if (event.which == 49){
-        id++;
-        socket.emit('new-client');
-    } if (event.which == 50){
-
+    if (event.which == 50){
+        if (event.type == 'keydown') {
+            id--;
+        }
     }
+    if (event.which == 51) {
+        if (event.type == 'keydown') {
+            id++;
+        }
+    }
+    update.id = id;
     const command = KeyToCommand[event.key];
     if(command){
         if(event.type === 'keydown'){
             update[command] = true;
-            update.id = id;
         }else{ /* keyup */
             update[command] = false;
         }
         console.log(update);
-        socket.emit('update', update);
     }
-
-
+    socket.emit('update', update);
 });
 
 

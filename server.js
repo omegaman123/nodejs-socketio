@@ -20,7 +20,7 @@ class Client {
         this.xarr=[];
         this.yarr = [];
         this.x = 0;
-        this.y = 0;
+        this.y = 5;
         this.z = 0;
         this.movement = {};
         this.URL = "static/test-clients/test-client-" + this.id + ".json";
@@ -51,30 +51,20 @@ io.on('connection', function (socket) {
         client.socketID = socket.id;
         clts[client.id] = client;
 
-        // if (client) {
-        //     fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
-        //         if (err) return;
-        //         else {
-        //             let st = JSON.parse(data);
-        //             client.x = st.x1;
-        //             client.y = st.y1;
-        //             client.xarr = st.xCrds;
-        //             client.yarr = st.yCrds;
-        //             console.log(client);
-        //             console.log("clients# " + clients);
-        //         }
-        //     });
-        // }
     });
     socket.on('update',  function(update){
         if (!clts[update.id]) {
             //console.log("blah");
             var cl = new Client();
+            cl.id = update.id;
             cl.socketID = socket.id;
             clts[update.id] = cl;
+
         }
+        //console.log(update.id);
         clts[update.id].movement = update;
         //console.log("bloo");
+        socket.emit('update-return',clts);
     });
 
 
