@@ -75,7 +75,6 @@ io.on('connection', function (socket) {
         }
         clts[update.id].movement = update;
         //console.log("bloo");
-
     });
 
 
@@ -115,7 +114,7 @@ setInterval(function () {
     });
     io.sockets.emit('update-return', clts);
 
-}, 1000 / 30);
+}, 1000/30);
 
 app.use('/static', express.static(__dirname + '/static'));
 

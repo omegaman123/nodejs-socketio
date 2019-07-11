@@ -59,13 +59,13 @@ function init(){
                     cMat = new THREE.MeshLambertMaterial({color:Math.random()});
                     var p = new THREE.Mesh(cGeo,cMat);
                     Msh[client.id] = p;
-
                     scene.add(p);
                 }
                 var c = Msh[client.id];
                 c.position.x = client.x;
                 c.position.z = client.z;
                 c.position.y = client.y;
+                //console.log("x y z id : "+ client.x + " " +client.y + " "+ client.z + " "+ client.id);
 
             });
         });
@@ -89,6 +89,7 @@ function resize(){
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+var id = 1;
 $(document).on('keydown keyup', (event) => {
     const KeyToCommand = {
         'ArrowUp': 'up',
@@ -97,9 +98,8 @@ $(document).on('keydown keyup', (event) => {
         'ArrowRight': 'right',
     };
     if (event.which == 49){
-
+        id++;
         socket.emit('new-client');
-        return;
     } if (event.which == 50){
 
     }
@@ -107,9 +107,11 @@ $(document).on('keydown keyup', (event) => {
     if(command){
         if(event.type === 'keydown'){
             update[command] = true;
+            update.id = id;
         }else{ /* keyup */
             update[command] = false;
         }
+        console.log(update);
         socket.emit('update', update);
     }
 
