@@ -15,7 +15,7 @@ let update = {};
 
 function init(){
     //init camera for scene
-    camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera  = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     //init scene where objects are placed and rendered.
     scene = new THREE.Scene();
@@ -43,6 +43,9 @@ function init(){
     camera.position.z = 30;
     camera.lookAt(scene.position);
 
+    var orbitControls = new THREE.OrbitControls(camera);
+    var clock = new THREE.Clock();
+
     var axes = new THREE.AxisHelper(20);
     scene.add(axes);
 
@@ -52,11 +55,23 @@ function init(){
     var cMat = new THREE.MeshLambertMaterial({color: 'black',wireframe:true});
     var cl = new THREE.Mesh(cGeo,cMat);
 
+    render();
+
+    function init() {
+        update.id = id;
+        socket.emit('update', update);
+    }
+
+    socket.on('connect', init);
+
     function render(){
         requestAnimationFrame(render);
         renderer.render(scene,camera);
 
-        //When client receives update-return, render all of the objects with updated positions
+        var delta = clock.getDelta();
+        orbitControls.update(delta);
+        
+        //When client receives update-return, render all objects with updated positions and/or new created objects
         socket.on('update-return',(clts)=>{
             Object.values(clts).forEach((client) => {
 
@@ -77,13 +92,7 @@ function init(){
         });
     }
 
-    render();
 
-    function init() {
-        socket.emit('new-client');
-    }
-
-    socket.on('connect', init);
 }
 function resize(){
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -94,10 +103,10 @@ function resize(){
 var id = 1;
 $(document).on('keydown keyup', (event) => {
     const KeyToCommand = {
-        'ArrowUp': 'up',
-        'ArrowDown': 'down',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
+        'w': 'up',
+        's': 'down',
+        'a': 'left',
+        'd': 'right',
     };
     if (event.which == 50){
         if (event.type == 'keydown') {

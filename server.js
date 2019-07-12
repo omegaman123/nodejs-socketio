@@ -39,17 +39,10 @@ let clts = {};
 io.on('connection', function (socket) {
     let client = null;
     console.log("connection success");
-    socket.on('new-client', (config) => {
-        console.log("clients# " + clients);
-        client = new Client();
-        client.id = ++clients;
-        client.socketID = socket.id;
-        clts[client.id] = client;
-
-    });
     // If server receives update, check ID, create new client if new ID, update movement field regardless.
     // Communicate to client that update needs to be rendered.
     socket.on('update',  function(update){
+        //Id not recognized, create new object for new ID
         if (!clts[update.id]) {
             //console.log("blah");
             var cl = new Client();
