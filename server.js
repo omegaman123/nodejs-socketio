@@ -4,7 +4,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
-const fs = require('fs');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
@@ -12,118 +11,80 @@ let clients = 0;
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
 
-
+//Client object with position and id, stored on server, displayed on client.
 class Client {
     constructor(obj = {}) {
-        this.id = ++clients;
+        this.id;
         this.socketID;
-        this.xarr=[];
-        this.yarr = [];
-        this.x = 100;
-        this.y = 100;
-        this.URL = "static/test-clients/test-client-" + this.id + ".json";
+        this.x = 0;
+        this.y = 5;
+        this.z = 0;
+        this.update = {};
+        //this.URL = "static/test-clients/test-client-" + this.id + ".json";
     }
 
     move(dX, dY) {
         this.x += dX;
-        this.y += dY;
+        this.z += dY;
     }
-
+    remove(){
+        delete objList[this.id];
+    }
 };
 
-
-
-let players = {};
-let clts = {};
+// Array of objects to be kept on server.
+let objList = {};
 
 
 io.on('connection', function (socket) {
-    let player = null;
-    let client = null;
     console.log("connection success");
-    socket.on('game-start', (config) => {
-        client = new Client();
-        client.socketID = socket.id;
-        clts[client.id] = client;
-        if (client) {
-            fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
-                if (err) throw err;
-                else {
-                    let st = JSON.parse(data);
-                    console.log(st);
-                    client.x = st.x1;
-                    client.y = st.y1;
-                    client.xarr = st.xCrds;
-                    client.yarr = st.yCrds;
-                    console.log(client);
-                }
-            });
+    // If server receives update, check ID, create new obj if new ID, update update field regardless.
+    // Communicate to client that update needs to be rendered.
+    socket.on('update',  function(update){
+        //Id not recognized, create new object for new ID
+        if (!objList[update.id]) {
+           //console.log("blah");
+            var cl = new Client();
+            cl.id = update.id;
+            cl.socketID = socket.id;
+            objList[update.id] = cl;
         }
-    });
-    socket.on('movement', function (movement) {
-        if (!player || !client) {
-            return;
-        }
-        console.log(client);
-    });
-    socket.on('new-client',function(){
-        console.log("12345");
-        client = new Client();
-        client.socketID = socket.id;
-        clts[client.id] = client;
-        if (client) {
-            fs.readFile(path.resolve(__dirname, client.URL), (err, data) => {
-                if (err) throw err;
-                else {
-                    let st = JSON.parse(data);
-                    console.log(st);
-                    client.x = st.x1;
-                    client.y = st.y1;
-                    client.xarr = st.xCrds;
-                    client.yarr = st.yCrds;
-                    console.log(client);
-                }
-            })
-        }
+        //console.log(update.id);
+        objList[update.id].update = update;
+        //console.log("bloo");
+        socket.emit('update-return',objList);
     });
 
+
     socket.on('disconnect', () => {
-        if (client) {
-            console.log("client : " + client.name + " disconnected")
-            delete clts[client.id];
-            client = null;
-            --clients;
-        }
+       console.log("disconnect");
+       return;
     });
 });
 
-function sleep(milliseconds) {
-    var start = new Date().getTime();
-    for (var i = 0; i < 1e7; i++) {
-        if ((new Date().getTime() - start) > milliseconds){
-            break;
-        }
-    }
-}
-
+// Checks update field of each client at set interval (30/sec) whether position needs to be updated.
+// Communicates that update needs to be rendered in client.
 setInterval(function () {
-    Object.values(clts).forEach((client) => {
-
-        if ((client.xarr[0]) != null){
-                client.x = client.xarr[0]
-                client.xarr.shift();
+   // sleep(1000);
+    Object.values(objList).forEach((client) => {
+        //console.log(client.id);
+        const mov = client.update;
+        if (mov.up){
+            client.move(0,-1);
         }
-        if (( client.yarr[0]) != null){
-            client.y = client.yarr[0]
-            client.yarr.shift();
+        if (mov.down){
+            client.move(0,1);
         }
-        sleep(1000);
-
-
+        if (mov.left){
+            client.move(-1,0);
+        }
+        if (mov.right){
+            client.move(1,0);
+        }
     });
-    io.sockets.emit('state', clts);
+    io.sockets.emit('update-return', objList);
 
-}, 1000 / 30);
+}, 1000/30);
 
 app.use('/static', express.static(__dirname + '/static'));
 

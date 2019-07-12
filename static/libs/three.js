@@ -29889,7 +29889,7 @@
 				face, flen = faces.length;
 
 
-			// Find directions for point movement
+			// Find directions for point update
 
 
 			function getBevelVec( inPt, inPrev, inNext ) {
