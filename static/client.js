@@ -70,7 +70,7 @@ function init(){
 
         var delta = clock.getDelta();
         orbitControls.update(delta);
-        
+
         //When client receives update-return, render all objects with updated positions and/or new created objects
         socket.on('update-return',(clts)=>{
             Object.values(clts).forEach((client) => {
@@ -99,6 +99,7 @@ function resize(){
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
 
 var id = 1;
 $(document).on('keydown keyup', (event) => {

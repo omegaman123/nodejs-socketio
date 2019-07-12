@@ -19,7 +19,7 @@ class Client {
         this.x = 0;
         this.y = 5;
         this.z = 0;
-        this.movement = {};
+        this.update = {};
         //this.URL = "static/test-clients/test-client-" + this.id + ".json";
     }
 
@@ -28,32 +28,31 @@ class Client {
         this.z += dY;
     }
     remove(){
-        delete clts[this.id];
+        delete objList[this.id];
     }
 };
 
-// Array of clients to be kept on server.
-let clts = {};
+// Array of objects to be kept on server.
+let objList = {};
 
 
 io.on('connection', function (socket) {
-    let client = null;
     console.log("connection success");
-    // If server receives update, check ID, create new client if new ID, update movement field regardless.
+    // If server receives update, check ID, create new obj if new ID, update update field regardless.
     // Communicate to client that update needs to be rendered.
     socket.on('update',  function(update){
         //Id not recognized, create new object for new ID
-        if (!clts[update.id]) {
-            //console.log("blah");
+        if (!objList[update.id]) {
+           //console.log("blah");
             var cl = new Client();
             cl.id = update.id;
             cl.socketID = socket.id;
-            clts[update.id] = cl;
+            objList[update.id] = cl;
         }
         //console.log(update.id);
-        clts[update.id].movement = update;
+        objList[update.id].update = update;
         //console.log("bloo");
-        socket.emit('update-return',clts);
+        socket.emit('update-return',objList);
     });
 
 
@@ -63,13 +62,13 @@ io.on('connection', function (socket) {
     });
 });
 
-// Checks movement field of each client at set interval (30/sec) whether position needs to be updated.
+// Checks update field of each client at set interval (30/sec) whether position needs to be updated.
 // Communicates that update needs to be rendered in client.
 setInterval(function () {
    // sleep(1000);
-    Object.values(clts).forEach((client) => {
+    Object.values(objList).forEach((client) => {
         //console.log(client.id);
-        const mov = client.movement;
+        const mov = client.update;
         if (mov.up){
             client.move(0,-1);
         }
@@ -83,7 +82,7 @@ setInterval(function () {
             client.move(1,0);
         }
     });
-    io.sockets.emit('update-return', clts);
+    io.sockets.emit('update-return', objList);
 
 }, 1000/30);
 
